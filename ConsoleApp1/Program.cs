@@ -1,195 +1,196 @@
-﻿using System;
-bool q;
+bool playOrNo;
 do
-{   string card1; 
-    string[] card = { };
-    int[] card2 = { 0, 0, 0, 0, 0 };
-    string[] arr = { "A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2" }; //все возможные карты 
-    string[] flesh = { "10", "J", "Q", "K", "A" }; // флеш рояль
-    int n = 0; //флеш-роял
-    int n1 = 0; // все карт
-    int n2 = 1; //каре, пара,се
-    int n3 = 0; //две пары
-    int n4 = 0;//стрит
-    int n5 = 0; //старшая карты 
-    int n6 = 0;
-    string[] str = { " " }; // для записи одинаковой карты во время проверки пары, сета.
+{
+    string userCards;
+    List<string> userCardsSort = new List<string>();
+    List<string> allCards = new List<string>() { "A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2" }; //все возможные карты 
+    var countNoCorrectlyCards = 0; // все карт
+    var testKarePairSet = 1; //каре, пара,сет
+    var testHighHand = 0; //старшая карты 
+    List<string> firstPairOrSet = new List<string> { " " }; // для записи одинаковой карты во время проверки пары, сета.
     do
     {
         Console.Write("Введите ваши карты (через пробел): ");
-
-         card1 = Convert.ToString(Console.ReadLine());
-        card = card1.Split(" ");
-        n6 = 0;
-        for (int i = 0; i < 5; i++) //проверка номинала
+        userCards = Convert.ToString(Console.ReadLine());
+        userCardsSort = userCards.Split(" ").ToList();
+        foreach (var i in userCardsSort)
         {
-            n1 = 0;
-            string a = card[i];
-            if (a == " ") continue;
-            for (int j = 0; j < 13; j++)
+            foreach (var item in allCards)
             {
-                if (a != arr[j])
-                {
-                    n1++;
-
-                }
-
+                if (i != item) countNoCorrectlyCards++;
             }
-            if (n1 == 13)
+            if (countNoCorrectlyCards == 13)
             {
-                Console.WriteLine("номинал " + a + " не соответствует!");
-                n6++;
+                Console.WriteLine("Номинал " + i + " не соответствует!");
+                break;
             }
+            countNoCorrectlyCards = 0;
+            if (countNoCorrectlyCards > 0) Console.WriteLine("Введите карты ещё раз! ");
         }
-        if (n6 > 0) Console.WriteLine("Введите карты ещё раз! ");
+    } while (countNoCorrectlyCards > 0);
 
-    } while (n6 > 0);
+    testHighHand += StraightCombination(userCardsSort, testHighHand);
+    testHighHand += PairAndKareCombination(userCardsSort, testKarePairSet, firstPairOrSet, testHighHand);
+    testKarePairSet = testHighHand;
+    testHighHand += FullHouse(userCardsSort, testKarePairSet, firstPairOrSet, testHighHand);
+    testHighHand += FleshRoyalCombination(userCardsSort, testKarePairSet, testHighHand);
 
-    for (int i = 0; i < 5; i++) //пара 
+    if (testHighHand == 0) Console.WriteLine("У вас старшая карта"); //старшая карта
+    Console.WriteLine("Хотите продолжить?\nВыберите цифру:\n1)Да\n2)Нет");
+    playOrNo = Convert.ToInt32(Console.ReadLine()) == 1 ? true : false;
+
+} while (playOrNo);
+
+int StraightCombination(List<string> userCardsSort, int testHighHand) //стрит
+{
+    const int countOperation = 4;
+    int testStraight = 0;//стрит
+    List<int> cardsForStraight = new List<int>();
+    foreach (string item in userCardsSort)
     {
-        string b = card[i];
-
-        for (int j = 0; j < 5; j++)
+        switch (item)
         {
-            string d = card[j];
+            case "A":
+                cardsForStraight.Add(1);
+                break;
+            case "J":
+                cardsForStraight.Add(11);
+                break;
+            case "Q":
+                cardsForStraight.Add(12);
+                break;
+            case "K":
+                cardsForStraight.Add(13);
+                break;
+            default:
+                cardsForStraight.Add(Convert.ToInt32(item));
+                break;
+        }
+    }
+
+    cardsForStraight.Sort();
+    for (var i = 0; i < countOperation; i++)
+    {
+        if (cardsForStraight[i + 1] - cardsForStraight[i] == 1) testStraight++;
+    }
+    if (testStraight == 4)
+    {
+        Console.WriteLine("У вас стрит");
+        testHighHand += 1;
+        return testHighHand;
+    }
+    else { return 0; }
+}
+
+int PairAndKareCombination(List<string> userCardsSort, int testKarePairSet, List<string> firstPairOrSet, int testHighHand) //пара,две пары, каре
+{
+    for (var i = 0; i < userCardsSort.Count; i++) //пара 
+    {
+        string b = userCardsSort[i];
+        for (var j = 0; j < userCardsSort.Count; j++)
+        {
+            string d = userCardsSort[j];
             if (i == j) continue;
             if (b == d)
             {
-                n2 = n2 + 1;
-                str[0] = card[j];
+                testKarePairSet += 1;
+                firstPairOrSet[0] = userCardsSort[j];
             }
         }
-        if (n2 == 2 || n2 == 3) break;
-        if (n2 == 4)
+        if (testKarePairSet == 2 || testKarePairSet == 3)
+        {
+            return testKarePairSet;
+        }
+        if (testKarePairSet == 4)
         {
             Console.WriteLine("У вас каре");
-            n5++;
-
+            return ++testHighHand;
         }
     }
+    return 0;
+}
 
-    for (int i = 0; i < 5; i++)  // флеш-роял
-    {
-        if (n2 > 1) break;
-        string b = card[i];
-        for (int j = 0; j < 5; j++)
-        {
-            if (b == flesh[j])
-            {
-                n = n + 1;
-                break;
-            }
-        }
-        if (i == 4 && n == 5)
-        {
-            Console.WriteLine("У вас флеш-роял");
-            n5++;
-        }
-    }
-
-    switch (n2)  // фул-хаус и две пары
+int FullHouse(List<string> userCardsSort, int testKarePairSet, List<string> firstPairOrSet, int testHighHand) //фул-хаус,две пары, сет
+{
+    int testTwoPair = 0; //две пары
+    switch (testKarePairSet)  // фул-хаус и две пары
     {
         case 2:
-            for (int i = 0; i < 5; i++)
+            for (var i = 0; i < userCardsSort.Count; i++)
             {
-
-                if (str[0] == card[i]) continue;
+                if (firstPairOrSet[0] == userCardsSort[i]) continue;
                 else
                 {
-                    for (int j = 0; j < 5; j++)
+                    for (var j = 0; j < userCardsSort.Count; j++)
                     {
                         if (i == j) continue;
-                        if (card[i].ToString() == card[j])
+                        if (userCardsSort[i] == userCardsSort[j])
                         {
-                            n3 = n3 + 1;
-                            n5++;
-
+                            testTwoPair += 1;
                         }
                     }
-
-                    if (n3 == 2)
+                    if (testTwoPair == 2)
                     {
                         Console.WriteLine("У вас фул-хаус");
-                        n5++;
-                        break;
+                        return ++testHighHand;
                     }
-                    if (n3 == 1)
+                    if (testTwoPair == 1)
                     {
                         Console.WriteLine("У вас две пары");
-                        n5++;
-                        break;
+                        return ++testHighHand;
                     }
-
                 }
-                if (n3 == 1 || n3 == 2) break;
             }
-            if (n3 == 0)
+            if (testTwoPair == 0)
             {
                 Console.WriteLine("У вас пара");
-                n5++;
+                return testHighHand++;
             }
             break;
         case 3:
-            for (int i = 0; i < 5; i++)
+            for (var i = 0; i < userCardsSort.Count; i++)
             {
-                if (str[0] == card[i]) continue;
+                if (firstPairOrSet[0] == userCardsSort[i]) continue;
                 else
                 {
-                    for (int j = 0; j < 5; j++)
+                    for (int j = 0; j < userCardsSort.Count; j++)
                     {
-                        if (card[i] == card[j] && i != j)
+                        if (userCardsSort[i] == userCardsSort[j] && i != j)
                         {
-                            n3 = n3 + 1;
+                            testTwoPair += 1;
                             break;
                         }
-
                     }
                 }
-                if (n3 == 1) break;
+                if (testTwoPair == 1) break;
             }
-            Console.WriteLine(n3 == 1 ? "У вас фул-хаус" : "У вас сет");
-            n5++;
-            break;
+            Console.WriteLine(testTwoPair == 1 ? "У вас фул-хаус" : "У вас сет");
+            return testHighHand++;
     }
+    return 0;
+}
 
-    for (int i = 0; i < 5; i++) //стрит
-    {
-        switch (card[i])
+int FleshRoyalCombination(List<string> userCardsSort, int testKarePairSet, int testHighHand)//флеш рояль
+{
+    List<string> flesh = new List<string> { "10", "J", "Q", "K", "A" };
+    int countCardFlesh = 0; //флеш-роял
+        foreach (var item in userCardsSort)
         {
-            case "A":
-                card2[i] = 1;
-                break;
-            case "J":
-                card2[i] = 11;
-                break;
-            case "Q":
-                card2[i] = 12;
-                break;
-            case "K":
-                card2[i] = 13;
-                break;
-            default:
-                card2[i] = Convert.ToInt32(card[i]);
-                break;
+            if (testKarePairSet > 1) break;
+
+            foreach (var j in flesh)
+            {
+                if (item == j)
+                {
+                    countCardFlesh += 1;
+                    break;
+                }
+            }
+            if (countCardFlesh == 5)
+            {
+                Console.WriteLine("У вас флеш-роял");
+                return ++testHighHand;
+            }
         }
-    }
-
-    Array.Sort(card2);
-
-    for (int i = 0; i < 4; i++)
-    {
-        if (card2[i + 1] - card2[i] == 1) n4++;
-    }
-    if (n4 == 4)
-    {
-        Console.WriteLine("У вас стрит");
-        n5++;
-    }
-
-    if (n5 == 0) Console.WriteLine("У вас старшая карта"); //старшая карта
-
-    Console.WriteLine("Хотите продолжить?\nВыберите цифру:\n1)Да\n2)Нет");
-    q = Convert.ToInt32(Console.ReadLine()) == 1 ? true : false;
-
-
-} while (q);
+    return 0;
+}
