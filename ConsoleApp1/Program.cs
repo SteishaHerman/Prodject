@@ -1,41 +1,35 @@
 bool playOrNo;
 do
 {
-    bool[] answerFunction = new bool[7];
-    Poker poker = new Poker();
-    poker.TestAllCards();
-    poker.SortUserCards();
-    answerFunction[0] = poker.StraightCombination();
-    answerFunction[1] = poker.PairCombination();
-    answerFunction[2] = poker.SetCombination();
-    answerFunction[3] = poker.KareCombination();
-    answerFunction[4] = poker.FullHouseCombination();
-    answerFunction[5] = poker.TwoPairCombination();
-    answerFunction[6] = poker.FleshRoyalCombination();
-    poker.HightHandComination(answerFunction);
+    PersonalCards personalCards = new PersonalCards();
+    personalCards.TestAllCard();
+    personalCards.SortCard();
+    personalCards.CallCombination();
     Console.WriteLine("Хотите продолжить?\nВыберите цифру:\n1)Да\n2)Нет");
     playOrNo = Convert.ToInt32(Console.ReadLine()) == 1 ? true : false;
-
-} while (playOrNo);
-
-class Poker
+}
+while (playOrNo);
+interface IPersonalCards
+{
+    void TestAllCard() { }
+    void SortCard() { }
+}
+class PersonalCards : IPersonalCards
 {
     string userCards;
+    List<string> sortCards = new List<string>();
     List<string> userCardsSort = new List<string>();
-    List<string> sortCards = new List<string>(); 
     List<string> allCards = new List<string>() { "A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2" }; //все возможные карты 
     List<int> cardsForStraight = new List<int>();
-    List<string> flesh = new List<string> { "A","10", "J", "Q", "K"};
-    int countNoCorrectlyCards = 0; // все карт
-    int testStraight = 0;//стрит
-    public List<string> TestAllCards()
+    public void TestAllCard()
     {
+        int countNoCorrectlyCards = 0; // все карт
         do
         {
             Console.Write("Введите ваши карты (через пробел): ");
             userCards = Convert.ToString(Console.ReadLine());
-            userCardsSort = userCards.Split(" ").ToList();
-            foreach (var i in userCardsSort)
+            sortCards = userCards.Split(" ").ToList();
+            foreach (var i in sortCards)
             {
                 foreach (var item in allCards)
                 {
@@ -43,53 +37,85 @@ class Poker
                 }
                 if (countNoCorrectlyCards == 13)
                 {
-                    Console.WriteLine("Номинал " + i + " не соответствует!");
+                    Console.WriteLine("Номинал " + i + " не соответствует!\nВведите карты ещё раз! ");
                     break;
                 }
                 countNoCorrectlyCards = 0;
-                if (countNoCorrectlyCards > 0) Console.WriteLine("Введите карты ещё раз! ");
             }
-
         } while (countNoCorrectlyCards > 0);
-        return userCardsSort;
-    } //проверка карт
-    public List<string> SortUserCards()
+    }
+    public void SortCard()
     {
-        foreach (string item in userCardsSort)
         {
-            switch (item)
+            foreach (string item in sortCards)
             {
-                case "A":
-                    cardsForStraight.Add(1);
-                    break;
-                case "J":
-                    cardsForStraight.Add(11);
-                    break;
-                case "Q":
-                    cardsForStraight.Add(12);
-                    break;
-                case "K":
-                    cardsForStraight.Add(13);
-                    break;
-                default:
-                    cardsForStraight.Add(Convert.ToInt32(item));
-                    break;
+                switch (item)
+                {
+                    case "A":
+                        cardsForStraight.Add(1);
+                        break;
+                    case "J":
+                        cardsForStraight.Add(11);
+                        break;
+                    case "Q":
+                        cardsForStraight.Add(12);
+                        break;
+                    case "K":
+                        cardsForStraight.Add(13);
+                        break;
+                    default:
+                        cardsForStraight.Add(Convert.ToInt32(item));
+                        break;
+                }
+            }
+            cardsForStraight.Sort();
+            for (int i = 0; i < cardsForStraight.Count; i++)
+            {
+                userCardsSort.Add(Convert.ToString(cardsForStraight[i]));
+                if (sortCards[i] == "1") sortCards[i] = "A";
+                if (sortCards[i] == "13") sortCards[i] = "K";
+                if (sortCards[i] == "12") sortCards[i] = "Q";
+                if (sortCards[i] == "11") sortCards[i] = "J";
             }
         }
-        cardsForStraight.Sort();
-        for (int i = 0; i < cardsForStraight.Count; i++)
-        {
-            sortCards.Add(Convert.ToString(cardsForStraight[i]));
-            if (sortCards[i] == "1") sortCards[i] = "A";
-            if (sortCards[i] == "13") sortCards[i] = "K";
-            if (sortCards[i] == "12") sortCards[i] = "Q";
-            if (sortCards[i] == "11") sortCards[i] = "J";
-        }
-        return sortCards;
-
-    } //сортировка
-    public bool StraightCombination() //стрит
+    }
+    public void CallCombination()
     {
+        Combination combination = new Combination(userCardsSort);
+        combination.StraightCombination(cardsForStraight);
+        combination.PairCombination();
+        combination.SetCombination();
+        combination.KareCombination();
+        combination.FullHouseCombination();
+        combination.TwoPairCombination();
+        combination.FleshRoyalCombination();
+        combination.HightHandComination();
+    }
+}
+interface ICombination
+{
+    void StraightCombination(List<int> cardsForStraight);
+    void PairCombination();
+    void SetCombination();
+    void KareCombination();
+    void FullHouseCombination();
+    void TwoPairCombination();
+    void FleshRoyalCombination();
+    void HightHandComination();
+}
+
+class Combination : ICombination
+{
+    List<string> userCardsSort = new List<string>();
+    List<string> flesh = new List<string> { "A", "10", "J", "Q", "K" };
+    bool testHightHand = false;
+    public Combination(List<string> userCardsSort)
+    {
+        this.userCardsSort = userCardsSort;
+    }
+    public void StraightCombination(List<int> cardsForStraight) //стрит
+    {
+        int testStraight = 0;
         const int countOperation = 4;
         for (var i = 0; i < countOperation; i++)
         {
@@ -97,179 +123,136 @@ class Poker
         }
         if (testStraight == countOperation)
         {
-            Console.WriteLine("У вас стрит");
-            return true;
+            Console.WriteLine("У вас стрит!");
         }
-        else { return false; }
     }
-    public bool PairCombination()
+    public void PairCombination()//одна пара 
     {
         var countPair = 0;
-        for (var i = 0; i < sortCards.Count; i++)
+        for (var i = 0; i < userCardsSort.Count; i++)
         {
             var countCardPair = 1;
-            for (var j = i + 1; j < sortCards.Count; j++)
+            for (var j = i + 1; j < userCardsSort.Count; j++)
             {
-                if (sortCards[i] == sortCards[j])
+                if (userCardsSort[i] == userCardsSort[j])
                     ++countCardPair;
             }
-            if (countCardPair == 3 || countCardPair == 4)
-                return false;
-            if (countCardPair == 2)
-                ++countPair;
+            if (countCardPair ==2 )
+               ++countPair ;
         }
-        if(countPair ==1) 
+        if (countPair == 1)
         {
             Console.WriteLine("У вас пара!");
-            return true;
+            testHightHand = true;
         }
-        return false;
-    } //одна пара
-    public bool SetCombination()
+    } 
+    public void SetCombination()//сет
     {
-        var index = 0;
-        var count = 1;
-        for (int i = 0; i < sortCards.Count; i++)
+        var countCard = 1;
+        for (int i = 0; i < userCardsSort.Count; i++)
         {
-            for (int j = 1 + i; j < sortCards.Count; j++)
+            countCard = 1;
+            for (int j = 1 + i; j < userCardsSort.Count; j++)
             {
-                if (sortCards[i] == sortCards[j])
-                {
-                    index = j;
-                    ++count;
-                }
+                if (userCardsSort[i] == userCardsSort[j])
+                    ++countCard;
             }
-            if (count == 3 && index == 2)
-            {
-                if (sortCards[index + 1] != sortCards[index + 2])
-                {
-                    Console.WriteLine("У вас сет!");
-                    return true;
-                }
-                else return false;
-            }
-            if (count == 3 && index > 2)
-            {
-                Console.WriteLine("У вас сет!");
-                return true;
-            }
-            if (count == 2)
-                return false;
+            if (countCard == 2)
+                break;
         }
-        return false;
-    } //сет
-    public bool KareCombination() //Каре
+        if (countCard == 3)
+        {
+            testHightHand =true;
+            Console.WriteLine("У вас сет!");
+        }
+    } 
+    public void KareCombination() //Каре
     {
-        for (var i = 0; i < sortCards.Count; i++)
+        for (var i = 0; i < userCardsSort.Count; i++)
         {
             var countKare = 1;
-            for (var j = 1 + i; j < sortCards.Count; j++)
+            for (var j = 1 + i; j < userCardsSort.Count; j++)
             {
-                if (sortCards[i] == sortCards[j])
+                if (userCardsSort[i] == userCardsSort[j])
                     ++countKare;
             }
             if (countKare == 4)
             {
-                Console.WriteLine("У вас Каре");
-                return true;
+                Console.WriteLine("У вас Каре!");
+                testHightHand = true;
             }
         }
-        return false;
     }
-    public bool FullHouseCombination()
+    public void FullHouseCombination() //фул хаус
     {
         var countCardTwo = 0;
         var index = 0;
-        for (int i = 0; i < sortCards.Count;)
+        for (int i = 0; i < userCardsSort.Count;)
         {
             var countCardOne = 1;
-            for (int j = 1 + i; j < sortCards.Count; j++)
+            for (int j = 1 + i; j < userCardsSort.Count; j++)
             {
-                if (sortCards[i] == sortCards[j])
-                { ++countCardOne; 
-                    index=j;
-                } 
+                if (userCardsSort[i] == userCardsSort[j])
+                {
+                    ++countCardOne;
+                    index = j;
+                }
             }
             i++;
             if (countCardOne == 2 || countCardOne == 3)
             {
                 if (countCardTwo != 0 && countCardTwo != countCardOne)
                 {
-                    Console.WriteLine("У вас фулл-хаус ");
-                    return true;
+                    Console.WriteLine("У вас фулл-хаус!");
+                    testHightHand = true;
                 }
-                if (countCardTwo == 0)
-                {
-                    i = index+1;
-                    countCardTwo = countCardOne;
-                }
-               
+                i = index + 1;
+                countCardTwo = countCardOne;
             }
-            ;
         }
-        return false;
-    }// фулл-хаус
-    public bool TwoPairCombination()
+    }
+    public void TwoPairCombination()// две пары
     {
         var secondPair = 0;
-        for (var i=0;i<sortCards.Count;i++)
+        for (var i = 0; i < userCardsSort.Count; i++)
         {
             var firstPair = 1;
-            for (var j =i   +1;j<sortCards.Count;j++)
+            for (var j = i + 1; j < userCardsSort.Count; j++)
             {
-                if (sortCards[i] == sortCards[j])
-                  ++firstPair;
+                if (userCardsSort[i] == userCardsSort[j])
+                    ++firstPair;
             }
+            if (firstPair == 3)
+                break;
             if(firstPair == 2)
             {
                 if (secondPair != 0 && firstPair == 2)
                 {
                     Console.WriteLine("У вас две пары!");
-                    return true;
+                    testHightHand = true;
+                    break;
                 }
-                if (secondPair == 0)
-                    secondPair = firstPair;
-
+                secondPair = firstPair;
             }
-            if (firstPair == 3 || firstPair == 4)
-                return false;
         }
-        return false;
-    } //две пары
-    public bool FleshRoyalCombination()
+    } 
+    public void FleshRoyalCombination() //флеш рояль
     {
-       var countFleshRoyal= 0;
-       for(var i=0;i<sortCards.Count;i++)
+        var countFleshRoyal = 0;
+        for (var i = 0; i < userCardsSort.Count; i++)
         {
-            if (sortCards[i] == flesh[i])
+            if (userCardsSort[i] == flesh[i])
                 ++countFleshRoyal;
         }
-        if (countFleshRoyal == sortCards.Count)
+        if (countFleshRoyal == userCardsSort.Count)
         {
-            Console.WriteLine("У вас Флеш Рояль");
-            return true;
+            Console.WriteLine("У вас Флеш Рояль!");
+            testHightHand = true;
         }
-        return false;
-    }//Флеш Рояль
-    public bool HightHandComination(bool[] answerFunction)
+    }
+    public void HightHandComination() //старшая карта
     {
-        var value = false;
-        var count = 0;
-        for(int i=0;i< answerFunction.Length;i++)
-        {
-            value = answerFunction[i];
-            if (value == false)
-                count++;
-            if (value == true)
-                return false;
-        }
-        if (count==7)
-        {
-            Console.WriteLine("У вас старшая карта");
-            return true;
-        }
-
-        return false;
-    } //старшая карта
+        if (testHightHand == false)
+            Console.WriteLine("Старшая карта! ");
+    } 
 }
-
