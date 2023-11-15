@@ -13,7 +13,6 @@ namespace ConsoleApp1
         string userCards;
         List<string> sortCards = new List<string>();
         List<string> userCardsSort = new List<string>();
-        List<string> allCards = new List<string>() { "A", "K", "Q", "J", "10", "9", "8", "7", "6", "5", "4", "3", "2" }; //все возможные карты 
         List<int> cardsForStraight = new List<int>();
         Dictionary<int, string> сards = new Dictionary<int, string>()
         {
